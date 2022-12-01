@@ -14,8 +14,8 @@ import java.util.*;
 public class OrderBook implements Level2View {
     private final String exchange;
     private final String symbol;
-    private final Map<BigDecimal, Map<Long, Order>> bids = new HashMap<>();
-    private final Map<BigDecimal, Map<Long, Order>> asks = new HashMap<>();
+    private final NavigableMap<BigDecimal, Map<Long, Order>> bids = new TreeMap<>();
+    private final NavigableMap<BigDecimal, Map<Long, Order>> asks = new TreeMap<>();
     private final AbstractMap<Long, Order> history = new HashMap<>();
 
     /**
@@ -214,55 +214,43 @@ public class OrderBook implements Level2View {
     }
 
     private BigDecimal getHighestBidPrice() {
-        return bids.entrySet()
+        return bids.descendingMap()
+                .entrySet()
                 .stream()
-                .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
-                .filter(priceLevel -> priceLevel
-                        .getValue()
-                        .values()
-                        .stream()
-                        .anyMatch(Order::isActive))
+                .filter(priceLevel -> !priceLevel.getValue().isEmpty())
                 .findFirst()
                 .map(Map.Entry::getKey)
                 .orElse(null);
     }
 
     private BigDecimal getLowestAskPrice() {
-        return asks.entrySet()
+        return asks
+                .entrySet()
                 .stream()
-                .sorted(Map.Entry.comparingByKey())
-                .filter(priceLevel -> priceLevel
-                        .getValue()
-                        .values()
-                        .stream()
-                        .anyMatch(Order::isActive))
+                .filter(priceLevel -> !priceLevel.getValue().isEmpty())
                 .findFirst()
                 .map(Map.Entry::getKey)
                 .orElse(null);
     }
 
     private long getBidSizeAtPriceLevel(BigDecimal price) {
-        NavigableMap<BigDecimal, Map<Long, Order>> sorted = new TreeMap<>(bids);
-        return sorted.tailMap(price, true)
+        return bids.tailMap(price, true)
                 .values()
                 .stream()
                 .flatMap(priceLevel -> priceLevel
                         .values()
                         .stream())
-                .filter(Order::isActive)
                 .mapToLong(Order::getQuantity)
                 .sum();
     }
 
     private long getAskSizeAtPriceLevel(BigDecimal price) {
-        NavigableMap<BigDecimal, Map<Long, Order>> sorted = new TreeMap<>(asks);
-        return sorted.headMap(price, true)
+        return asks.headMap(price, true)
                 .values()
                 .stream()
                 .flatMap(priceLevel -> priceLevel
                         .values()
                         .stream())
-                .filter(Order::isActive)
                 .mapToLong(Order::getQuantity)
                 .sum();
     }
@@ -270,22 +258,14 @@ public class OrderBook implements Level2View {
     private long getBidDepth() {
         return bids.entrySet()
                 .stream()
-                .filter(priceLevel -> priceLevel
-                        .getValue()
-                        .values()
-                        .stream()
-                        .anyMatch(Order::isActive))
+                .filter(priceLevel -> !priceLevel.getValue().isEmpty())
                 .count();
     }
 
     private long getAskDepth() {
         return asks.entrySet()
                 .stream()
-                .filter(priceLevel -> priceLevel
-                        .getValue()
-                        .values()
-                        .stream()
-                        .anyMatch(Order::isActive))
+                .filter(priceLevel -> !priceLevel.getValue().isEmpty())
                 .count();
     }
 }
