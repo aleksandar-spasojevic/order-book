@@ -1,6 +1,8 @@
 package org.example;
 
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 
 import java.math.BigDecimal;
 import java.util.Random;
@@ -232,6 +234,7 @@ class OrderBookTest {
     }
 
     @Nested
+    @TestMethodOrder(OrderAnnotation.class)
     class Performance {
 
         static OrderBook ob;
@@ -239,7 +242,11 @@ class OrderBookTest {
         @BeforeAll
         static void initOrderBook() {
             ob = new OrderBook("SIX", "AAPL");
+        }
 
+        @Test
+        @Order(1)
+        void performInsertion1MillionOrders() {
             Random random = new Random();
 
             long newOrderId = 1;
@@ -259,31 +266,37 @@ class OrderBookTest {
         }
 
         @RepeatedTest(5)
+        @Order(2)
         void performBookDepthASK() {
             ob.getBookDepth(ASK);
         }
 
         @RepeatedTest(5)
+        @Order(3)
         void performBookDepthBID() {
             ob.getBookDepth(BID);
         }
 
         @RepeatedTest(5)
+        @Order(4)
         void performTopOfBookASK() {
             ob.getTopOfBook(ASK);
         }
 
         @RepeatedTest(5)
+        @Order(5)
         void performTopOfBookBID() {
             ob.getTopOfBook(BID);
         }
 
         @RepeatedTest(5)
+        @Order(6)
         void performSizeForPriceLevelWorstASK() {
             ob.getSizeForPriceLevel(ASK, new BigDecimal(305));
         }
 
         @RepeatedTest(5)
+        @Order(7)
         void performSizeForPriceLevelWorstBID() {
             ob.getSizeForPriceLevel(BID, new BigDecimal(1));
         }
