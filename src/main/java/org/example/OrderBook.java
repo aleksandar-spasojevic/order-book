@@ -217,11 +217,7 @@ public class OrderBook implements Level2View {
         return bids.entrySet()
                 .stream()
                 .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
-                .filter(priceLevel -> priceLevel
-                        .getValue()
-                        .values()
-                        .stream()
-                        .anyMatch(Order::isActive))
+                .filter(priceLevel -> !priceLevel.getValue().isEmpty())
                 .findFirst()
                 .map(Map.Entry::getKey)
                 .orElse(null);
@@ -231,11 +227,7 @@ public class OrderBook implements Level2View {
         return asks.entrySet()
                 .stream()
                 .sorted(Map.Entry.comparingByKey())
-                .filter(priceLevel -> priceLevel
-                        .getValue()
-                        .values()
-                        .stream()
-                        .anyMatch(Order::isActive))
+                .filter(priceLevel -> !priceLevel.getValue().isEmpty())
                 .findFirst()
                 .map(Map.Entry::getKey)
                 .orElse(null);
@@ -249,7 +241,6 @@ public class OrderBook implements Level2View {
                 .flatMap(priceLevel -> priceLevel
                         .values()
                         .stream())
-                .filter(Order::isActive)
                 .mapToLong(Order::getQuantity)
                 .sum();
     }
@@ -262,7 +253,6 @@ public class OrderBook implements Level2View {
                 .flatMap(priceLevel -> priceLevel
                         .values()
                         .stream())
-                .filter(Order::isActive)
                 .mapToLong(Order::getQuantity)
                 .sum();
     }
@@ -270,22 +260,14 @@ public class OrderBook implements Level2View {
     private long getBidDepth() {
         return bids.entrySet()
                 .stream()
-                .filter(priceLevel -> priceLevel
-                        .getValue()
-                        .values()
-                        .stream()
-                        .anyMatch(Order::isActive))
+                .filter(priceLevel -> !priceLevel.getValue().isEmpty())
                 .count();
     }
 
     private long getAskDepth() {
         return asks.entrySet()
                 .stream()
-                .filter(priceLevel -> priceLevel
-                        .getValue()
-                        .values()
-                        .stream()
-                        .anyMatch(Order::isActive))
+                .filter(priceLevel -> !priceLevel.getValue().isEmpty())
                 .count();
     }
 }
