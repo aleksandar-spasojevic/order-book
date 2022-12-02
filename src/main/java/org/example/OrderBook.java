@@ -19,7 +19,7 @@ public class OrderBook implements Level2View {
     private final String symbol;
     private final NavigableMap<BigDecimal, Long> bids = new TreeMap<>();
     private final NavigableMap<BigDecimal, Long> asks = new TreeMap<>();
-    private final Map<Long, Order> history = new HashMap<>();
+    private final Map<Long, Order> orders = new HashMap<>();
 
     /**
      * Constructs an empty order book for symbol on specified exchange.
@@ -53,7 +53,7 @@ public class OrderBook implements Level2View {
     /**
      * Act on when new order has arrived
      *
-     * @param side     BID or ASK {@link Level2View.Side}
+     * @param side     {@code BID} or {@code ASK} {@link Level2View.Side}
      * @param price    of order
      * @param quantity of order
      * @param orderId  of order
@@ -61,11 +61,11 @@ public class OrderBook implements Level2View {
      */
     @Override
     public void onNewOrder(Side side, BigDecimal price, long quantity, long orderId) {
-        if (history.containsKey(orderId))
+        if (orders.containsKey(orderId))
             throw new RuntimeException("Order with orderId=" + orderId + " already exists");
 
         var order = new Order(side, orderId, price, quantity);
-        history.put(orderId, order);
+        orders.put(orderId, order);
         add(order);
     }
 
@@ -78,10 +78,10 @@ public class OrderBook implements Level2View {
      */
     @Override
     public void onCancelOrder(long orderId) {
-        if (!history.containsKey(orderId))
+        if (!orders.containsKey(orderId))
             throw new RuntimeException("No order with orderId=" + orderId);
 
-        Order order = history.get(orderId);
+        Order order = orders.get(orderId);
 
         if (!order.isActive())
             throw new RuntimeException("cancel on inactive order not allowed");
@@ -104,10 +104,10 @@ public class OrderBook implements Level2View {
     public void onReplaceOrder(BigDecimal price, long quantity, long orderId) {
         Order.validate(orderId, price, quantity);
 
-        if (!history.containsKey(orderId))
+        if (!orders.containsKey(orderId))
             throw new RuntimeException("No order with orderId=" + orderId);
 
-        var order = history.get(orderId);
+        var order = orders.get(orderId);
 
         if (!order.isActive())
             throw new RuntimeException("replace on inactive order not allowed");
@@ -125,17 +125,17 @@ public class OrderBook implements Level2View {
      * @param restingOrderId of order that has been crossed
      * @throws IllegalArgumentException if order's quantity &lt; quantity to be filled or if quantity &le; 0 or
      * @throws RuntimeException         if order not present in order book or if order is not active
-     *                                  or if quantity > order's quantity
+     *                                  or if quantity &gt; order's quantity
      */
     @Override
     public void onTrade(long quantity, long restingOrderId) {
         if (quantity <= 0)
             throw new IllegalArgumentException("quantity must be greater than 0");
 
-        if (!history.containsKey(restingOrderId))
+        if (!orders.containsKey(restingOrderId))
             throw new RuntimeException("No restingOrder with orderId=" + restingOrderId);
 
-        var order = history.get(restingOrderId);
+        var order = orders.get(restingOrderId);
 
         if (!order.isActive())
             throw new RuntimeException("fill inactive order not allowed");
@@ -157,7 +157,7 @@ public class OrderBook implements Level2View {
     /**
      * Quantity of price level
      *
-     * @param side  BID or ASK {@link Level2View.Side}
+     * @param side  {@code BID} or {@code ASK} {@link Level2View.Side}
      * @param price level
      * @return quantity of price level
      */
@@ -187,7 +187,7 @@ public class OrderBook implements Level2View {
     /**
      * Get highest {@code BID} or lowest {@code ASK}
      *
-     * @param side BID or ASK {@link Level2View.Side}
+     * @param side {@code BID} or {@code ASK} {@link Level2View.Side}
      * @return either highest {@code BID} or lowest {@code ASK}
      */
     @Override
