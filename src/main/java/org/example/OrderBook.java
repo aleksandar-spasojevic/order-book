@@ -123,8 +123,8 @@ public class OrderBook implements Level2View {
      *
      * @param quantity       to deduct from order (to be filled)
      * @param restingOrderId of order that has been crossed
-     * @throws IllegalArgumentException if order's quantity < quantity to be filled
-     * @throws RuntimeException         if quantity <= 0 or if order not present in order book or if order is not active
+     * @throws IllegalArgumentException if order's quantity &lt; quantity to be filled
+     * @throws RuntimeException         if quantity &le; 0 or if order not present in order book or if order is not active
      *                                  or if quantity > order's quantity
      */
     @Override

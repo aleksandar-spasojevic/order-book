@@ -20,6 +20,11 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.8.1'
 }
 
+tasks.withType(Javadoc).configureEach {
+    options.addStringOption('Xdoclint:none', '-quiet')
+    options.addStringOption('tag', 'implNote:a:Implementation Note:')
+}
+
 test {
     useJUnitPlatform()
 }
