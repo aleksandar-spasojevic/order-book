@@ -1,7 +1,10 @@
 package org.example;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
 
 /**
@@ -14,8 +17,8 @@ import java.util.*;
 public class OrderBook implements Level2View {
     private final String exchange;
     private final String symbol;
-    private final NavigableMap<BigDecimal, Map<Long, Order>> bids = new TreeMap<>();
-    private final NavigableMap<BigDecimal, Map<Long, Order>> asks = new TreeMap<>();
+    private final NavigableMap<BigDecimal, Long> bids = new TreeMap<>();
+    private final NavigableMap<BigDecimal, Long> asks = new TreeMap<>();
     private final AbstractMap<Long, Order> history = new HashMap<>();
 
     /**
@@ -30,7 +33,7 @@ public class OrderBook implements Level2View {
     }
 
     /**
-     * * Returns exchange's name
+     * Returns exchange's name
      *
      * @return exchange's name
      */
@@ -111,12 +114,10 @@ public class OrderBook implements Level2View {
         if (!order.isActive())
             throw new RuntimeException("replace on inactive order not allowed");
 
+        remove(order);
         order.setQuantity(quantity);
-        if (order.getPrice().compareTo(price) != 0) {
-            remove(order);
-            order.setPrice(price);
-            add(order);
-        }
+        order.setPrice(price);
+        add(order);
     }
 
     /**
@@ -125,7 +126,8 @@ public class OrderBook implements Level2View {
      * @param quantity       to deduct from order (to be filled)
      * @param restingOrderId of order that has been crossed
      * @throws IllegalArgumentException if order's quantity < quantity to be filled
-     * @throws RuntimeException         if quantity < 0 or if order not present in order book or if order is not active or
+     * @throws RuntimeException         if quantity <= 0 or if order not present in order book or if order is not active
+     *                                  or if quantity > order's quantity
      */
     @Override
     public void onTrade(long quantity, long restingOrderId) {
@@ -144,11 +146,15 @@ public class OrderBook implements Level2View {
             throw new IllegalArgumentException("cannot fill order due to quantity > order's quantity");
 
         var leftover = order.getQuantity() - quantity;
-        order.setQuantity(leftover);
-        if (leftover == 0)
+        if (leftover == 0) {
             remove(order);
+            order.setQuantity(leftover);
+        } else {
+            remove(order);
+            order.setQuantity(leftover);
+            add(order);
+        }
     }
-
 
     /**
      * Quantity of price level
@@ -195,52 +201,32 @@ public class OrderBook implements Level2View {
 
     private void add(Order order) {
         var bidsOrAsks = order.getSide() == Side.ASK ? asks : bids;
-        var priceLevel = bidsOrAsks.get(order.getPrice());
-        if (priceLevel == null) {
-            var newPriceLevel = new HashMap<Long, Order>();
-            newPriceLevel.put(order.getId(), order);
-            bidsOrAsks.put(order.getPrice(), newPriceLevel);
-        } else {
-            priceLevel.put(order.getId(), order);
-        }
+        bidsOrAsks.merge(order.getPrice(), order.getQuantity(), Long::sum);
     }
 
     private void remove(Order order) {
         var bidsOrAsks = order.getSide() == Side.ASK ? asks : bids;
-        var priceLevel = bidsOrAsks.get(order.getPrice());
-        if (priceLevel == null)
-            throw new RuntimeException("cannot remove order from Order book");
-        priceLevel.remove(order.getId());
+        bidsOrAsks.compute(order.getPrice(), (priceLevel, current) -> {
+            if (current == null || current < order.getQuantity())
+                throw new RuntimeException("cannot remove order from Order book");
+            var newCurrent = current - order.getQuantity();
+            return newCurrent > 0 ? newCurrent : null;
+        });
     }
 
     private BigDecimal getHighestBidPrice() {
-        return bids.descendingMap()
-                .entrySet()
-                .stream()
-                .filter(priceLevel -> !priceLevel.getValue().isEmpty())
-                .findFirst()
-                .map(Map.Entry::getKey)
-                .orElse(null);
+        return bids.isEmpty() ? null : bids.lastKey();
     }
 
     private BigDecimal getLowestAskPrice() {
-        return asks
-                .entrySet()
-                .stream()
-                .filter(priceLevel -> !priceLevel.getValue().isEmpty())
-                .findFirst()
-                .map(Map.Entry::getKey)
-                .orElse(null);
+        return asks.isEmpty() ? null : asks.firstKey();
     }
 
     private long getBidSizeAtPriceLevel(BigDecimal price) {
         return bids.tailMap(price, true)
                 .values()
                 .stream()
-                .flatMap(priceLevel -> priceLevel
-                        .values()
-                        .stream())
-                .mapToLong(Order::getQuantity)
+                .mapToLong(Long::longValue)
                 .sum();
     }
 
@@ -248,24 +234,15 @@ public class OrderBook implements Level2View {
         return asks.headMap(price, true)
                 .values()
                 .stream()
-                .flatMap(priceLevel -> priceLevel
-                        .values()
-                        .stream())
-                .mapToLong(Order::getQuantity)
+                .mapToLong(Long::longValue)
                 .sum();
     }
 
     private long getBidDepth() {
-        return bids.entrySet()
-                .stream()
-                .filter(priceLevel -> !priceLevel.getValue().isEmpty())
-                .count();
+        return bids.size();
     }
 
     private long getAskDepth() {
-        return asks.entrySet()
-                .stream()
-                .filter(priceLevel -> !priceLevel.getValue().isEmpty())
-                .count();
+        return asks.size();
     }
 }
