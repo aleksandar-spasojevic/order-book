@@ -142,9 +142,9 @@ public class OrderBook implements Level2View {
 
         if (quantity > order.getQuantity())
             throw new IllegalArgumentException("cannot fill order due to quantity > order's quantity");
-
-        var leftover = order.getQuantity() - quantity;
+        
         remove(order);
+        var leftover = order.getQuantity() - quantity;
         order.setQuantity(leftover);
         if (leftover > 0) add(order); // partial fill
     }
