@@ -174,8 +174,9 @@ public class OrderBook implements Level2View {
     /**
      * Get number of price levels available
      *
-     * @param side BID or ASK {@link Level2View.Side}
+     * @param side {@code BID} or {@code ASK} {@link Level2View.Side}
      * @return number (count) of price levels available
+     * @implNote If BID/ASK contains more than Integer.MAX_VALUE elements, returns Integer.MAX_VALUE
      */
     @Override
     public long getBookDepth(Side side) {
