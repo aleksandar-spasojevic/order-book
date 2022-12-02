@@ -23,8 +23,6 @@ class OrderBookTest {
     @BeforeEach
     void initOrderBook() {
         ob = new OrderBook("SIX", "AAPL");
-        assertEquals("SIX", ob.getExchange());
-        assertEquals("SIX", ob.getExchange());
     }
 
     @Test
