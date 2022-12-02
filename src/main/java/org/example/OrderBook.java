@@ -1,8 +1,8 @@
 package org.example;
 
 import java.math.BigDecimal;
-import java.util.AbstractMap;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
@@ -19,7 +19,7 @@ public class OrderBook implements Level2View {
     private final String symbol;
     private final NavigableMap<BigDecimal, Long> bids = new TreeMap<>();
     private final NavigableMap<BigDecimal, Long> asks = new TreeMap<>();
-    private final AbstractMap<Long, Order> history = new HashMap<>();
+    private final Map<Long, Order> history = new HashMap<>();
 
     /**
      * Constructs an empty order book for symbol on specified exchange.
