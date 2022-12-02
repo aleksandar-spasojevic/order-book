@@ -61,8 +61,6 @@ public class OrderBook implements Level2View {
      */
     @Override
     public void onNewOrder(Side side, BigDecimal price, long quantity, long orderId) {
-        Order.validate(orderId, price, quantity);
-
         if (history.containsKey(orderId))
             throw new RuntimeException("Order with orderId=" + orderId + " already exists");
 

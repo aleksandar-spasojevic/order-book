@@ -205,6 +205,7 @@ class OrderBookTest {
         ob.onNewOrder(BID, bd(96), 43, 834); // duplicate
         ob.onNewOrder(BID, bd(97), 53, 84);
         ob.onNewOrder(BID, bd(98), 63, 89);
+        ob.onNewOrder(BID, new BigDecimal(98.000), 63, 90);
 
         assertEquals(5, ob.getBookDepth(BID));
     }

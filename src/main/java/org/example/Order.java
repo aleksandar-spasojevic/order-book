@@ -14,8 +14,6 @@ final class Order {
     Order(Side side, long orderId, BigDecimal price, long quantity) {
         this.side = side;
 
-        validate(orderId, price, quantity);
-
         setId(orderId);
         setPrice(price);
         setQuantity(quantity);
@@ -29,10 +27,6 @@ final class Order {
 
     Side getSide() {
         return side;
-    }
-
-    Status getStatus() {
-        return status;
     }
 
     long getId() {
@@ -49,7 +43,7 @@ final class Order {
     }
 
     BigDecimal getPrice() {
-        return price;
+        return price; // BigDecimal is immutable
     }
 
     void setPrice(BigDecimal price) {
@@ -80,7 +74,7 @@ final class Order {
     }
 
     boolean isActive() {
-        return getStatus() == Status.ACTIVE;
+        return status == Status.ACTIVE;
     }
 
     private enum Status {
