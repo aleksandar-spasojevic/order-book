@@ -232,6 +232,17 @@ class OrderBookTest {
         assertEquals(bd(98), ob.getTopOfBook(BID));
     }
 
+    @Test
+    void testBigDecimalEqualityOnDifferentScale() {
+        ob.onNewOrder(ASK, new BigDecimal("88.000000000"), 22, 1);
+        ob.onNewOrder(ASK, new BigDecimal("88"), 22, 2);
+
+        // TreeMap uses natural ordering. This means for BigDecimal as key 'compareTo' is used
+        assertTrue(bd(88).compareTo(ob.getTopOfBook(ASK)) == 0);
+        assertEquals(1, ob.getBookDepth(ASK));
+        assertEquals(44, ob.getSizeForPriceLevel(ASK, bd(88))); // new quantity
+    }
+
     @Nested
     @TestMethodOrder(OrderAnnotation.class)
     class Performance {
