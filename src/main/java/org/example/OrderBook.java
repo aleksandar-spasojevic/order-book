@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
+import static org.example.Level2View.Side.ASK;
+
 
 /**
  * An order book is the list of orders that a trading venue (in particular stock exchanges) uses to record the interest
@@ -86,8 +88,8 @@ public class OrderBook implements Level2View {
         if (!order.isActive())
             throw new RuntimeException("cancel on inactive order not allowed");
 
-        order.cancel();
         remove(order);
+        order.cancel();
     }
 
     /**
@@ -142,7 +144,7 @@ public class OrderBook implements Level2View {
 
         if (quantity > order.getQuantity())
             throw new IllegalArgumentException("cannot fill order due to quantity > order's quantity");
-        
+
         remove(order);
         var leftover = order.getQuantity() - quantity;
         order.setQuantity(leftover);
@@ -158,10 +160,11 @@ public class OrderBook implements Level2View {
      */
     @Override
     public long getSizeForPriceLevel(Side side, BigDecimal price) {
-        return switch (side) {
-            case BID -> getBidSizeAtPriceLevel(price);
-            case ASK -> getAskSizeAtPriceLevel(price);
-        };
+        var bidsOrAsks = side == ASK ? asks.headMap(price, true) : bids.tailMap(price, true);
+        return bidsOrAsks.values()
+                .stream()
+                .mapToLong(Long::longValue)
+                .sum();
     }
 
     /**
@@ -173,10 +176,8 @@ public class OrderBook implements Level2View {
      */
     @Override
     public long getBookDepth(Side side) {
-        return switch (side) {
-            case BID -> getBidDepth();
-            case ASK -> getAskDepth();
-        };
+        var bidsOrAsks = side == ASK ? asks : bids;
+        return bidsOrAsks.size();
     }
 
     /**
@@ -188,55 +189,23 @@ public class OrderBook implements Level2View {
     @Override
     public BigDecimal getTopOfBook(Side side) {
         return switch (side) {
-            case BID -> getHighestBidPrice();
-            case ASK -> getLowestAskPrice();
+            case BID -> bids.isEmpty() ? null : bids.lastKey();
+            case ASK -> asks.isEmpty() ? null : asks.firstKey();
         };
     }
 
     private void add(Order order) {
-        var bidsOrAsks = order.getSide() == Side.ASK ? asks : bids;
+        var bidsOrAsks = order.getSide() == ASK ? asks : bids;
         bidsOrAsks.merge(order.getPrice(), order.getQuantity(), Long::sum);
     }
 
     private void remove(Order order) {
-        var bidsOrAsks = order.getSide() == Side.ASK ? asks : bids;
+        var bidsOrAsks = order.getSide() == ASK ? asks : bids;
         bidsOrAsks.compute(order.getPrice(), (priceLevel, current) -> {
             if (current == null || current < order.getQuantity())
                 throw new RuntimeException("cannot remove order from Order book");
             var newCurrent = current - order.getQuantity();
             return newCurrent > 0 ? newCurrent : null;
         });
-    }
-
-    private BigDecimal getHighestBidPrice() {
-        return bids.isEmpty() ? null : bids.lastKey();
-    }
-
-    private BigDecimal getLowestAskPrice() {
-        return asks.isEmpty() ? null : asks.firstKey();
-    }
-
-    private long getBidSizeAtPriceLevel(BigDecimal price) {
-        return bids.tailMap(price, true)
-                .values()
-                .stream()
-                .mapToLong(Long::longValue)
-                .sum();
-    }
-
-    private long getAskSizeAtPriceLevel(BigDecimal price) {
-        return asks.headMap(price, true)
-                .values()
-                .stream()
-                .mapToLong(Long::longValue)
-                .sum();
-    }
-
-    private long getBidDepth() {
-        return bids.size();
-    }
-
-    private long getAskDepth() {
-        return asks.size();
     }
 }
