@@ -201,11 +201,11 @@ public class OrderBook implements Level2View {
 
     private void remove(Order order) {
         var bidsOrAsks = order.getSide() == ASK ? asks : bids;
-        bidsOrAsks.compute(order.getPrice(), (priceLevel, current) -> {
-            if (current == null || current < order.getQuantity())
+        bidsOrAsks.compute(order.getPrice(), (priceLevel, currentQuantity) -> {
+            if (currentQuantity == null || currentQuantity < order.getQuantity())
                 throw new RuntimeException("cannot remove order from Order book");
-            var newCurrent = current - order.getQuantity();
-            return newCurrent > 0 ? newCurrent : null;
+            var newQuantity = currentQuantity - order.getQuantity();
+            return newQuantity > 0 ? newQuantity : null;
         });
     }
 }
