@@ -17,7 +17,7 @@ class OrderBookTest {
     OrderBook ob;
 
     private BigDecimal bd(double i) {
-        return new BigDecimal(i);
+        return BigDecimal.valueOf(i);
     }
 
     @BeforeEach
@@ -55,7 +55,7 @@ class OrderBookTest {
         // ASK
         assertEquals(1, ob.getBookDepth(ASK));
         assertEquals(34, ob.getSizeForPriceLevel(ASK, bd(99)));
-        assertEquals(bd(99), ob.getTopOfBook(ASK));
+        assertEquals(0, bd(99).compareTo(ob.getTopOfBook(ASK)));
 
         // BID
         assertEquals(0, ob.getBookDepth(BID));
@@ -104,7 +104,7 @@ class OrderBookTest {
 
         assertEquals(1, ob.getBookDepth(BID));
         assertEquals(25, ob.getSizeForPriceLevel(BID, bd(99))); // new quantity
-        assertEquals(new BigDecimal(99), ob.getTopOfBook(BID));
+        assertEquals(0, bd(99).compareTo(ob.getTopOfBook(BID)));
 
         // replace on new price-level and quantity
         ob.onReplaceOrder(bd(95), 3, 1);
@@ -112,7 +112,7 @@ class OrderBookTest {
         assertEquals(0, ob.getSizeForPriceLevel(BID, bd(99)));
         assertEquals(3, ob.getSizeForPriceLevel(BID, bd(95))); // new quantity
         assertEquals(3, ob.getSizeForPriceLevel(BID, bd(94))); // new quantity
-        assertEquals(new BigDecimal(95), ob.getTopOfBook(BID));
+        assertEquals(0, bd(95).compareTo(ob.getTopOfBook(BID)));
 
         // try replacing order with invalid price/quantity
         assertThrows(RuntimeException.class, () -> ob.onReplaceOrder(bd(96), -555, 1));
@@ -127,7 +127,7 @@ class OrderBookTest {
 
         assertEquals(1, ob.getBookDepth(ASK));
         assertEquals(13 - 4, ob.getSizeForPriceLevel(ASK, bd(94))); // new quantity
-        assertEquals(bd(94), ob.getTopOfBook(ASK));
+        assertEquals(0, bd(94).compareTo(ob.getTopOfBook(ASK)));
 
         //try to fill more than order's quantity
         assertThrows(RuntimeException.class, () -> ob.onTrade(99, 1));
@@ -205,7 +205,7 @@ class OrderBookTest {
         ob.onNewOrder(BID, bd(96), 43, 834); // duplicate
         ob.onNewOrder(BID, bd(97), 53, 84);
         ob.onNewOrder(BID, bd(98), 63, 89);
-        ob.onNewOrder(BID, new BigDecimal(98.000), 63, 90);
+        ob.onNewOrder(BID, new BigDecimal("98.000"), 63, 90);
 
         assertEquals(5, ob.getBookDepth(BID));
     }
@@ -217,7 +217,7 @@ class OrderBookTest {
         ob.onNewOrder(ASK, bd(96), 43, 3);
         ob.onNewOrder(ASK, bd(97), 53, 4);
 
-        assertEquals(bd(94), ob.getTopOfBook(ASK));
+        assertEquals(0, bd(94).compareTo(ob.getTopOfBook(ASK)));
         assertNull(ob.getTopOfBook(BID));
 
         ob.onNewOrder(BID, bd(94), 13, 81);
@@ -229,7 +229,7 @@ class OrderBookTest {
         ob.onNewOrder(BID, bd(97), 53, 84);
         ob.onNewOrder(BID, bd(98), 63, 89);
 
-        assertEquals(bd(98), ob.getTopOfBook(BID));
+        assertEquals(0, bd(98).compareTo(ob.getTopOfBook(BID)));
     }
 
     @Test
@@ -238,7 +238,7 @@ class OrderBookTest {
         ob.onNewOrder(ASK, new BigDecimal("88"), 22, 2);
 
         // TreeMap uses natural ordering. This means for BigDecimal as key 'compareTo' is used
-        assertTrue(bd(88).compareTo(ob.getTopOfBook(ASK)) == 0);
+        assertEquals(0, bd(88).compareTo(ob.getTopOfBook(ASK)));
         assertEquals(1, ob.getBookDepth(ASK));
         assertEquals(44, ob.getSizeForPriceLevel(ASK, bd(88))); // new quantity
     }
