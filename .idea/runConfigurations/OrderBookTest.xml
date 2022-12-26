@@ -15,7 +15,7 @@
           <option value="&quot;org.example.OrderBookTest&quot;" />
         </list>
       </option>
-      <option name="vmOptions" value="-Xmx1G" />
+      <option name="vmOptions" value="-Xmx500M" />
     </ExternalSystemSettings>
     <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
     <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>

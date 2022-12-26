@@ -125,9 +125,9 @@ public class OrderBook implements Level2View {
      *
      * @param quantity       to deduct from order (to be filled)
      * @param restingOrderId of order that has been crossed
-     * @throws IllegalArgumentException if order's quantity &lt; quantity to be filled or if quantity &le; 0 or
+     * @throws IllegalArgumentException if quantity &gt; order's quantity to be filled or if quantity &le; 0
      * @throws RuntimeException         if order not present in order book or if order is not active
-     *                                  or if quantity &gt; order's quantity
+     *
      */
     @Override
     public void onTrade(long quantity, long restingOrderId) {
@@ -135,7 +135,7 @@ public class OrderBook implements Level2View {
             throw new IllegalArgumentException("quantity must be greater than 0");
 
         if (!orders.containsKey(restingOrderId))
-            throw new RuntimeException("No restingOrder with orderId=" + restingOrderId);
+            throw new RuntimeException("No resting order with orderId=" + restingOrderId);
 
         var order = orders.get(restingOrderId);
 
